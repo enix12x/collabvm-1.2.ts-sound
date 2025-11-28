@@ -1,30 +1,22 @@
 import { WebSocket } from 'ws';
 import { NetworkClient } from '../NetworkClient.js';
 import EventEmitter from 'events';
-import { pino, type Logger } from 'pino';
+import pino from 'pino';
 
 export default class WSClient extends EventEmitter implements NetworkClient {
 	socket: WebSocket;
 	ip: string;
-	uuid: string;
 	enforceTextOnly = true
-	private logger: Logger;
+	private logger = pino({ name: "CVMTS.WebsocketClient" });
 
-	constructor(ws: WebSocket, ip: string, uuid: string) {
+	constructor(ws: WebSocket, ip: string) {
 		super();
 		this.socket = ws;
 		this.ip = ip;
-		this.uuid = uuid;
-		this.logger = pino().child({
-			name: "CVMTS.WebsocketClient",
-			"uuid/websocket/client": uuid,
-			src_ip: ip,
-		});
 		this.socket.on('message', (buf: Buffer, isBinary: boolean) => {
 			// Close the user's connection if they send a binary message
 			// when we are not expecting them yet.
 			if (isBinary && this.enforceTextOnly) {
-				this.logger.info({event: "received unexpected binary message"});
 				this.close();
 				return;
 			}
@@ -33,11 +25,10 @@ export default class WSClient extends EventEmitter implements NetworkClient {
 		});
 
 		this.socket.on('error', (err: Error) => {
-			this.logger.error({event: "websocket recv error", msg: err});
+			this.logger.error(err, 'WebSocket recv error');
 		})
 
 		this.socket.on('close', () => {
-			this.logger.info({event: "disconnecting client"});
 			this.emit('disconnect');
 		});
 	}
@@ -51,13 +42,12 @@ export default class WSClient extends EventEmitter implements NetworkClient {
 	}
 
 	send(msg: string): Promise<void> {
-		this.logger.trace({event: "outgoing message", msg});
 		return new Promise((res, rej) => {
 			if (!this.isOpen()) return res();
 
 			this.socket.send(msg, (err) => {
 				if (err) {
-					this.logger.error({event: "websocket send error", msg: err});
+					this.logger.error(err, 'WebSocket send error');
 					this.close();
 					res();
 					return;
@@ -68,13 +58,12 @@ export default class WSClient extends EventEmitter implements NetworkClient {
 	}
 
 	sendBinary(msg: Uint8Array): Promise<void> {
-		this.logger.trace({event: "outgoing message", msg});
 		return new Promise((res, rej) => {
 			if (!this.isOpen()) return res();
 
 			this.socket.send(msg, (err) => {
 				if (err) {
-					this.logger.error({event: "websocket send error", msg: err});
+					this.logger.error(err, 'WebSocket send error');
 					this.close();
 					res();
 					return;
