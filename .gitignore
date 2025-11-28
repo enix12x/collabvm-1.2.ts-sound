@@ -1,6 +1,5 @@
 .parcel-cache/
 **/.yarn/
-**/node_modules/
 config.toml
 
 # for now
