@@ -45,10 +45,16 @@ type = "qemu"
 # QEMU options
 # Only used if vm.type is set to "qemu"
 [qemu]
-qemuArgs = "qemu-system-x86_64"
+qemuArgs = "qemu-system-x86_64 -device intel-hda"
 # VNC port to be used for this VM. Must be unique among all VMs. Only used on Windows, as unix sockets are used on Linux.
 vncPort = 5900
 snapshots = true
+
+# Sound options
+audioEnabled = true
+audioFrequency = 48000 # only 48 khz is supported at this time
+audioId = "audio" # you can change this to whatever you want, must be unique
+audioDevice = "hda-duplex" # example: ac97, es1370, sb16
 
 # Resource limits. 
 # Only works on Linux, with `Delegate=yes` set in your .service file. No-op on other platforms.
@@ -73,7 +79,7 @@ snapshots = true
 # is more than likely what you want, so the example configuration omits specifying this key.
 #
 # Commenting or removing this table from the configuration disables resource limiting entirely.
-resourceLimits = { cpuUsageMax = 100, runOnCpus = [ 2, 4 ] }
+# resourceLimits = { cpuUsageMax = 100, runOnCpus = [ 2, 4 ] }
 
 
 # VNC options
